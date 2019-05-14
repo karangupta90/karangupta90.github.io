@@ -17,7 +17,7 @@ body
 
 .navbar
 {
-	background-image: linear-gradient(to right, #a517ba, #5f1782);
+	background-image: linear-gradient(to right, #4b6cb7, #182848);
 	padding: 0 !important;
 }
 
@@ -29,7 +29,7 @@ navbar-brand img
 
 .logo-pic
 {
-	height: 40px;
+	height: 50px;
 }
 
 
@@ -56,28 +56,25 @@ navbar-brand img
 /*---------------------------- BANNER SECTION -------------------*/
 #banner
 {
-	background-image: linear-gradient(to right, #a517ba, #5f1782);
-	color: #ffff; 
+	background-image: linear-gradient(to right, #4b6cb7, #182848);
+	color: #fff; 
 	padding-top: 5%;
 }
 
 .img-fluid
 {
 	height: 300px !important;
+	border-radius: 70%;
 }
 
 .promo-tile
 {
-	font-size: 40px;
+	font-size: 30px;
 	font-weight: 600;
 	margin-top: 100px;
 }
 
-.play-btn
-{
-	width: 45px;
-	margin: 20px;
-}
+
 
 #banner a
 {
@@ -85,10 +82,9 @@ navbar-brand img
 	text-decoration: none;
 }
 
-.bottom-img
-{
-	width=100%;
-}
+
+
+
 
 #services
 {
@@ -118,12 +114,13 @@ navbar-brand img
 .services p
 {
 	font-size: 14;
+
 }
 
 .title::before
 {
 	content:"";
-	background: #7b1798;
+	background: #4b6cb7;
 	height: 5px;
 	width: 200px;
 	margin-left: auto;
@@ -134,7 +131,7 @@ navbar-brand img
 .title::after
 {
 	content:"";
-	background: #7b1798;
+	background: #4b6cb7;
 	height: 10px;
 	width: 50px;
 	margin-left: auto;
@@ -150,7 +147,7 @@ navbar-brand img
 	padding: 8px 25px;
 	border: none;
 	border-radius: 20px;
-	background-image: linear-gradient(to right, #a517ba, #5f1782);
+	background-image: linear-gradient(to right, #4b6cb7, #182848);
 }
 
 
@@ -245,7 +242,7 @@ navbar-brand img
 
 #footer
 {
-	background-image: linear-gradient(to right, #a517ba, #5f1782);
+	background-image: linear-gradient(to right, #4b6cb7, #182848);
 	color: #fff;
 }
 
@@ -263,7 +260,7 @@ navbar-brand img
 .footer-box img
 {
 	width: 120px;
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 }
 
 
@@ -276,7 +273,7 @@ navbar-brand img
 	text-align: center;
 	padding-top: 7px;
 	border-radius: 2px;
-	background-image: linear-gradient(to right, #a517ba, #5f1782);
+	background-image: linear-gradient(to right, #4b6cb7, #182848);
 }
 
 .footer-box .form-control
@@ -294,7 +291,7 @@ navbar-brand img
 	border: none;
 	border-radius: 0;
 	margin-top: 30px;
-	background-image: linear-gradient(to right, #a517ba, #5f1782);
+	background-image: linear-gradient(to right, #4b6cb7, #182848);
 }
 
 hr
