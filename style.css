@@ -3,6 +3,7 @@
 	margin: 0;
 	padding: 0;
 }
+
 body
 {
 	font-family: sans-serif;
@@ -27,11 +28,20 @@ navbar-brand img
 	padding-left: 20px;
 }
 
-.logo-pic
+.navbar-nav logo-pic
 {
 	height: 50px;
 }
 
+.navbar h1
+{
+	padding: 0 10px;
+	color: #ffff !important;
+	font-weight: 600 !important;
+	float: right !important;
+	font: Roboto;
+	font-size: 30;
+}
 
 .navbar-nav li
 {
@@ -69,7 +79,7 @@ navbar-brand img
 
 .promo-tile
 {
-	font-size: 30px;
+	font-size: 26px;
 	font-weight: 600;
 	margin-top: 100px;
 }
