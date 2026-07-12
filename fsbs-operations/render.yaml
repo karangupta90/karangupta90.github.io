@@ -1,0 +1,24 @@
+# Render Blueprint — deploys the FSBS Operations app with a persistent disk.
+# In Render: New + → Blueprint → connect the private fsbs-operations repo → Apply.
+services:
+  - type: web
+    name: fsbs-operations
+    runtime: node
+    rootDir: app
+    plan: starter            # ~$7/mo; has persistent disk support
+    buildCommand: "true"     # zero dependencies — nothing to install
+    startCommand: node server.js
+    healthCheckPath: /
+    disk:
+      name: fsbs-data
+      mountPath: /data
+      sizeGB: 5
+    envVars:
+      - key: FSBS_DATA_DIR
+        value: /data
+      - key: TZ
+        value: America/Toronto
+      - key: PORT
+        value: "3000"
+      - key: BASE_URL
+        sync: false          # set to the real URL (e.g. https://fsbs-operations.onrender.com or your custom domain) after first deploy
