@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FSBS Operations — Sign in</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛁</text></svg>">
+<link rel="stylesheet" href="/assets/style.css">
+<style>.wrap{max-width:420px;margin:3rem auto;}</style>
+</head>
+<body>
+<div class="container wrap">
+  <h1 style="text-align:center;">Five Star Bath Solutions<span style="display:block;font-size:1rem;font-weight:400;">Operations — Staff Sign in</span></h1>
+  <div class="card highlight">
+    <form id="f">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="username" required>
+      <label for="pw">Password</label>
+      <input type="password" id="pw" autocomplete="current-password" required>
+      <button class="btn btn-primary btn-block" style="margin-top:1rem;">Sign in</button>
+      <p class="small" id="err" style="color:var(--red);display:none;"></p>
+    </form>
+  </div>
+  <p class="small" style="text-align:center;">Customers: use the secure link we sent you — no password needed.<br><a href="/portal/">Open the customer project page</a></p>
+</div>
+<script>
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email: document.getElementById('email').value, password: document.getElementById('pw').value }) });
+  if (!r.ok) { const d = await r.json(); const el = document.getElementById('err'); el.textContent = d.error || 'Sign-in failed.'; el.style.display='block'; return; }
+  const me = await r.json();
+  location.href = me.role === 'rep' ? '/rep/' : me.role === 'installer' ? '/installer/' : '/manage/';
+});
+</script>
+</body>
+</html>

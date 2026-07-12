@@ -1,0 +1,7 @@
+# Real business configuration — never commit to a public repository.
+# When this project moves to the private repo, remove the seed.private.json line there.
+seed/seed.private.json
+
+# Runtime data (database, uploaded files)
+data/
+node_modules/

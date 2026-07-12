@@ -4,6 +4,8 @@ Operating-system design, research, independent review, and working prototypes fo
 
 Start here: [`docs/00-executive-summary.md`](docs/00-executive-summary.md)
 
+**Working implementation:** [`app/`](app/README.md) — a real, tested Node.js + SQLite application (zero external dependencies) implementing the full system: sales-rep accountability, customer magic-link portal, service calls, commissions (real 2026 tier engine), installer invoicing, revenue reporting, webhook integration boundary. `cd app && node server.js` to run; `node --test test/api.test.js` for the 22-test suite. Real business config (rates, tiers) lives in a git-ignored private seed file.
+
 ## Contents
 
 ### Documentation (`docs/`)

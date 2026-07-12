@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Appointments — FSBS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛁</text></svg>">
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+  .conditional{display:none}.conditional.show{display:block}
+  #result-panel{display:none;position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:50}
+  .ackbtns .btn{flex:1 1 auto}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">Five Star Bath Solutions<small id="who">Sales Rep</small></div>
+  <a class="help-call" id="office-call" href="tel:">📞 Office</a>
+</header>
+<div class="container">
+  <div id="overdue" class="banner" style="display:none;">⚠ <b>You have overdue items.</b> Please acknowledge or complete results now.</div>
+  <h1>My Appointments</h1>
+  <p class="small">You must tap <b>Acknowledge</b> — opening an appointment doesn't count.</p>
+  <div id="list" class="stack"></div>
+</div>
+
+<div id="result-panel">
+  <header class="app-header"><div class="brand">Post-Appointment Result</div><button class="btn" id="close-r" style="background:transparent;border-color:#fff;color:#fff;">Close</button></header>
+  <div class="container">
+    <form id="rf">
+      <label>Outcome *</label>
+      <select id="outcome" required>
+        <option value="">Select…</option>
+        <option value="sold">Sold</option><option value="pitch_miss">Pitch and miss</option>
+        <option value="standby">Standby / follow-up</option><option value="no_demo">No demo</option>
+        <option value="out_of_scope">Out of scope</option><option value="cancelled">Customer cancelled</option>
+        <option value="no_show">Customer no-show</option><option value="rescheduled">Rescheduled</option>
+        <option value="financing_pending">Financing pending</option><option value="decision_maker_absent">Decision-maker absent</option>
+        <option value="proposal_pending">Proposal pending</option><option value="other">Other</option>
+      </select>
+
+      <div class="conditional" data-for="sold,pitch_miss,standby,no_demo,out_of_scope,financing_pending,proposal_pending">
+        <div class="grid-2">
+          <div><label>Initial price ($)</label><input type="number" id="initial_price" min="0" step="0.01"></div>
+          <div><label>Lowest price presented ($)</label><input type="number" id="lowest_price" min="0" step="0.01"></div>
+        </div>
+        <p class="field-hint" id="disc-hint">Discount calculates automatically.</p>
+        <label>Primary objection</label>
+        <select id="objection"><option value="">None</option><option>Price</option><option>Timing</option><option>Think it over</option><option>Decision-maker absent</option><option>Comparing quotes</option><option>Financing</option></select>
+      </div>
+
+      <div class="conditional" data-for="sold">
+        <label>Final selling price ($) *</label><input type="number" id="final_price" min="0" step="0.01">
+        <label>Contract signed? *</label>
+        <div class="choice-row"><label><input type="radio" name="cs" value="1"> Yes</label><label><input type="radio" name="cs" value="0"> No</label></div>
+        <label>Deposit collected?</label>
+        <div class="choice-row"><label><input type="radio" name="dep" value="1"> Yes</label><label><input type="radio" name="dep" value="0"> No</label></div>
+        <div class="grid-2">
+          <div><label>Deposit amount ($)</label><input type="number" id="deposit_amount" min="0" step="0.01"></div>
+          <div><label>Deposit method</label><select id="deposit_method"><option value="">—</option><option value="etransfer">e-Transfer</option><option value="cheque">Cheque</option><option value="card">Credit card</option><option value="financing">Financing</option></select></div>
+        </div>
+        <label>Requested installation timing</label><input type="text" id="install_timing" placeholder="e.g., late August">
+      </div>
+
+      <div class="conditional" data-for="standby"><label>Follow-up date *</label><input type="date" id="follow_up_date"></div>
+      <div class="conditional" data-for="cancelled,no_show,rescheduled,out_of_scope,other"><label>Explanation *</label><textarea id="explanation"></textarea></div>
+
+      <hr class="rule"><h3>Documentation</h3>
+      <label>Photos uploaded to CompanyCam? *</label>
+      <div class="choice-row"><label><input type="radio" name="ph" value="1" required> Yes</label><label><input type="radio" name="ph" value="0"> No</label></div>
+      <label>3D design (file or secure link) — required</label>
+      <input type="file" id="design_file" accept=".pdf,.png,.jpg,.jpeg">
+      <input type="text" id="design_url" placeholder="…or paste a secure design link">
+      <p class="small" id="design-status"></p>
+      <label>Notes</label><textarea id="notes"></textarea>
+      <div class="row" style="margin-top:1rem;">
+        <button type="button" class="btn btn-block" id="draft">Save draft</button>
+        <button type="submit" class="btn btn-primary btn-block">Submit result</button>
+      </div>
+      <p class="small" id="rerr" style="color:var(--red);"></p>
+    </form>
+  </div>
+</div>
+
+<script>
+let APPTS = [], CUR = null;
+const $ = (id) => document.getElementById(id);
+async function api(path, opts) {
+  const r = await fetch(path, { headers: {'Content-Type':'application/json'}, ...opts });
+  if (r.status === 401) { location.href = '/'; throw new Error('auth'); }
+  return r;
+}
+async function load() {
+  const me = await (await api('/api/me')).json();
+  $('who').textContent = 'Rep: ' + me.name;
+  APPTS = await (await api('/api/rep/appointments')).json();
+  const list = $('list'); list.innerHTML = '';
+  let anyOver = false;
+  for (const a of APPTS) {
+    const over = (a.ack_tier > 0 && a.ack_status === 'pending') || (a.result_tier > 0 && ['pending','draft'].includes(a.result_status));
+    if (over) anyOver = true;
+    const pill = a.ack_status === 'pending'
+      ? (a.ack_tier > 0 ? '<span class="pill pill-overdue">Acknowledgement overdue</span>' : '<span class="pill pill-progress">Needs acknowledgement</span>')
+      : a.result_status === 'submitted' ? '<span class="pill pill-done">Result submitted</span>'
+      : a.result_status === 'returned' ? '<span class="pill pill-overdue">Returned — fix & resubmit</span>'
+      : (a.result_tier > 0 ? '<span class="pill pill-overdue">Result overdue</span>' : '<span class="pill pill-done">Acknowledged</span>');
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+      <div class="spread"><h3 style="margin:0;">${a.customer_name}</h3>${pill}</div>
+      <p class="small">${a.scheduled_at} · ${a.project_type || ''}</p>
+      <p class="small">${a.address || ''}</p>
+      <div class="row">
+        <a class="btn" target="_blank" href="https://maps.google.com/?q=${encodeURIComponent(a.address || '')}">🧭 Directions</a>
+        <a class="btn" href="tel:${a.customer_phone || ''}">📞 Call</a>
+      </div>
+      <p class="small muted">${a.lead_notes || ''}</p>
+      ${a.ack_status === 'pending' ? `
+        <div class="row ackbtns">
+          <button class="btn btn-primary" data-ack="received" data-id="${a.id}">✓ Received & reviewed</button>
+          <button class="btn" data-ack="need_info" data-id="${a.id}">Need info</button>
+          <button class="btn" data-ack="conflict" data-id="${a.id}">Conflict</button>
+          <button class="btn" data-ack="wrong_info" data-id="${a.id}">Info wrong</button>
+          <button class="btn" data-ack="unable" data-id="${a.id}">Can't attend</button>
+        </div>` : ''}
+      ${a.ack_status === 'acknowledged' && ['pending','draft','returned'].includes(a.result_status) ? `
+        <button class="btn btn-primary btn-block" data-result="${a.id}" style="margin-top:.5rem;">Complete post-appointment result</button>` : ''}
+      ${a.design_count === 0 && a.status === 'completed' ? '<p class="small" style="color:var(--red);">⚠ 3D design missing — flagged to management</p>' : ''}
+    `;
+    list.appendChild(el);
+  }
+  $('overdue').style.display = anyOver ? 'block' : 'none';
+  list.querySelectorAll('[data-ack]').forEach(b => b.addEventListener('click', async () => {
+    await api(`/api/rep/appointments/${b.dataset.id}/ack`, { method:'POST', body: JSON.stringify({ response: b.dataset.ack }) });
+    load();
+  }));
+  list.querySelectorAll('[data-result]').forEach(b => b.addEventListener('click', () => openResult(Number(b.dataset.result))));
+}
+function openResult(id) {
+  CUR = id; $('rf').reset(); $('rerr').textContent = '';
+  document.querySelectorAll('.conditional').forEach(c => c.classList.remove('show'));
+  $('result-panel').style.display = 'block'; scrollTo(0,0);
+}
+$('close-r').addEventListener('click', () => $('result-panel').style.display = 'none');
+$('outcome').addEventListener('change', (e) => {
+  document.querySelectorAll('.conditional').forEach(c => c.classList.toggle('show', c.dataset.for.split(',').includes(e.target.value)));
+});
+function disc() {
+  const i = parseFloat($('initial_price').value), l = parseFloat($('lowest_price').value);
+  $('disc-hint').textContent = (!isNaN(i) && !isNaN(l) && i > 0) ? `Discount: $${(i-l).toFixed(2)} (${(((i-l)/i)*100).toFixed(1)}%)` : 'Discount calculates automatically.';
+}
+$('initial_price').addEventListener('input', disc); $('lowest_price').addEventListener('input', disc);
+
+async function uploadDesign() {
+  const f = $('design_file').files[0], url = $('design_url').value.trim();
+  if (!f && !url) return false;
+  let payload = {};
+  if (f) {
+    const b64 = await new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(r.result.split(',')[1]); r.onerror = err; r.readAsDataURL(f); });
+    payload = { filename: f.name, content_base64: b64 };
+  } else payload = { external_url: url };
+  const r = await api(`/api/rep/appointments/${CUR}/design`, { method:'POST', body: JSON.stringify(payload) });
+  return r.ok;
+}
+function gather(draft) {
+  return {
+    draft, outcome: $('outcome').value,
+    data: {
+      initial_price: $('initial_price').value ? Number($('initial_price').value) : null,
+      lowest_price: $('lowest_price').value ? Number($('lowest_price').value) : null,
+      final_price: $('final_price').value ? Number($('final_price').value) : null,
+      contract_signed: document.querySelector('input[name=cs]:checked')?.value === '1',
+      deposit_collected: document.querySelector('input[name=dep]:checked')?.value === '1',
+      deposit_amount: $('deposit_amount').value ? Number($('deposit_amount').value) : 0,
+      deposit_method: $('deposit_method').value || null,
+      install_timing: $('install_timing').value || null,
+      follow_up_date: $('follow_up_date').value || null,
+      explanation: $('explanation').value || null,
+      objection: $('objection').value || null,
+      photos_done: document.querySelector('input[name=ph]:checked')?.value === '1',
+      notes: $('notes').value || null,
+      proposal_created: !!$('initial_price').value,
+    },
+  };
+}
+$('draft').addEventListener('click', async () => {
+  await api(`/api/rep/appointments/${CUR}/result`, { method:'POST', body: JSON.stringify(gather(true)) });
+  $('result-panel').style.display = 'none'; load();
+});
+$('rf').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const designOk = await uploadDesign();
+  if (!designOk && !confirm('No 3D design attached. This will be flagged to management as missing. Submit anyway?')) return;
+  const r = await api(`/api/rep/appointments/${CUR}/result`, { method:'POST', body: JSON.stringify(gather(false)) });
+  const d = await r.json();
+  if (!r.ok) { $('rerr').textContent = (d.errors || [d.error]).join(' '); return; }
+  $('result-panel').style.display = 'none'; load();
+});
+$('office-call').href = 'tel:+13438432719';
+load();
+</script>
+</body>
+</html>

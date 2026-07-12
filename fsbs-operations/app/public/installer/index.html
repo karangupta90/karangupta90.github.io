@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installer — FSBS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛁</text></svg>">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">Five Star Bath Solutions<small id="who">Installer</small></div>
+  <a class="help-call" href="tel:+13438432719">📞 Office</a>
+</header>
+<div class="container">
+  <h1>Submit Invoice</h1>
+  <p class="small">Pick the work you did, add receipts, done. Bonus is automatic when the checklist is complete.</p>
+  <div class="card">
+    <form id="f">
+      <label>Project *</label><select id="project" required></select>
+      <label>Work performed (tap to add)</label>
+      <div id="rate-list" class="stack"></div>
+      <label>Mileage (total km — first 50 free)</label><input type="number" id="km" min="0" value="0">
+      <label>Receipts (materials / dump fees — totals incl. HST)</label>
+      <div id="receipts"></div>
+      <button type="button" class="btn" id="add-receipt">+ Add receipt</button>
+      <h3 style="margin-top:1rem;">$150 bonus checklist</h3>
+      <div class="stack">
+        <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="bk-photos"> Checklist photos added to CompanyCam</label>
+        <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="bk-form"> Completion form signed, no service call</label>
+        <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="bk-payment"> Payment collected</label>
+        <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="bk-review"> 4–5★ review provided by customer</label>
+      </div>
+      <label>Note (optional)</label><input type="text" id="note">
+      <div class="card highlight" id="preview" style="margin-top:1rem;">Select work above to see totals.</div>
+      <button class="btn btn-primary btn-block">Submit invoice</button>
+    </form>
+    <p id="ok" style="display:none;color:var(--green);font-weight:700;"></p>
+  </div>
+  <h2>My invoices</h2>
+  <div class="card" id="mine"></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const api = async (p, o={}) => { const r = await fetch(p, { headers:{'Content-Type':'application/json'}, ...o }); if (r.status===401) location.href='/'; return r; };
+let RATES = [], SEL = {}; // code -> qty
+const money = (n) => '$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+async function load(){
+  const me = await (await api('/api/me')).json(); $('who').textContent = me.name;
+  const projects = await (await api('/api/installer/projects')).json();
+  $('project').innerHTML = projects.map(p => `<option value="${p.id}">${p.customer_name} — ${p.address||''}</option>`).join('') || '<option value="">(no assigned projects)</option>';
+  RATES = await (await api('/api/installer/rates')).json();
+  $('rate-list').innerHTML = RATES.map(r => `
+    <div class="list-row"><span>${r.label} <span class="small muted">${money(r.rate)}${r.unit!=='ea'?'/'+r.unit:''}</span></span>
+    <span><button type="button" class="btn" data-minus="${r.code}">−</button> <b id="q-${r.code}">0</b> <button type="button" class="btn" data-plus="${r.code}">+</button></span></div>`).join('');
+  document.querySelectorAll('[data-plus]').forEach(b => b.addEventListener('click', () => bump(b.dataset.plus, 1)));
+  document.querySelectorAll('[data-minus]').forEach(b => b.addEventListener('click', () => bump(b.dataset.minus, -1)));
+  const mine = await (await api('/api/installer/invoices')).json();
+  $('mine').innerHTML = mine.map(i => `<div class="list-row"><span>#${i.id} — ${money(i.total)}${i.bonus_amount>0?' (incl. bonus)':''}</span><span class="pill ${i.status==='paid'?'pill-done':'pill-progress'}">${i.status}</span></div>`).join('') || '<p class="small muted">None yet.</p>';
+}
+function bump(code, d){ SEL[code] = Math.max(0, (SEL[code]||0)+d); $('q-'+code).textContent = SEL[code]; preview(); }
+$('add-receipt').addEventListener('click', () => {
+  const div = document.createElement('div'); div.className='row';
+  div.innerHTML = '<input placeholder="Description (e.g., Rona)" class="r-desc" style="flex:2;"><input placeholder="Total incl. HST" type="number" step="0.01" class="r-total" style="flex:1;">';
+  $('receipts').appendChild(div);
+  div.querySelector('.r-total').addEventListener('input', preview);
+});
+$('km').addEventListener('input', preview);
+['bk-photos','bk-form','bk-payment','bk-review'].forEach(id => $(id).addEventListener('change', preview));
+function currentPayload(){
+  return {
+    project_id: Number($('project').value),
+    lines: Object.entries(SEL).filter(([,q]) => q>0).map(([code, qty]) => ({ code, qty })),
+    receipts: [...document.querySelectorAll('#receipts .row')].map(r => ({ description: r.querySelector('.r-desc').value, total: Number(r.querySelector('.r-total').value||0) })).filter(r => r.total>0),
+    mileage_km: Number($('km').value||0),
+    bonus_checklist: { photos: $('bk-photos').checked, form: $('bk-form').checked, payment: $('bk-payment').checked, review: $('bk-review').checked },
+    note: $('note').value,
+  };
+}
+function preview(){
+  const p = currentPayload();
+  const hst = 0.13, freeKm = 50, kmRate = 0.40, bonusAmt = 150;
+  let sub = 0;
+  for (const l of p.lines) { const r = RATES.find(x=>x.code===l.code); if (r) sub += r.rate * l.qty; }
+  sub += Math.max(0, p.mileage_km - freeKm) * kmRate;
+  sub += p.receipts.reduce((s,r)=>s+r.total,0);
+  const bonus = ['photos','form','payment','review'].every(k=>p.bonus_checklist[k]) ? bonusAmt : 0;
+  const tax = (sub+bonus)*hst;
+  $('preview').innerHTML = `Subtotal ${money(sub)}${bonus?` + bonus ${money(bonus)}`:''} + HST ${money(tax)} = <b>${money(sub+bonus+tax)}</b>`;
+}
+$('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = await api('/api/installer/invoices', { method:'POST', body: JSON.stringify(currentPayload()) });
+  const d = await r.json();
+  if (!r.ok) { alert(d.error||'Failed'); return; }
+  $('ok').style.display='block'; $('ok').textContent = `✓ Invoice #${d.id} submitted — total ${money(d.total)}.`;
+  SEL={}; $('f').reset(); $('receipts').innerHTML=''; load();
+});
+load();
+</script>
+</body>
+</html>

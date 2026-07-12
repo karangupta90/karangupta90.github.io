@@ -1,0 +1,28 @@
+{
+  "_comment": "EXAMPLE seed with fictional placeholder values. Real business configuration lives in seed.private.json (git-ignored on public repos). Structure is identical — copy this file to seed.private.json and fill in real rates/users.",
+  "users": [
+    { "name": "Admin User", "email": "admin@example.com", "phone": "+16135550100", "role": "admin", "password": "change-me-admin" },
+    { "name": "Manager Demo", "email": "manager@example.com", "phone": "+16135550101", "role": "manager", "password": "change-me-manager" },
+    { "name": "Office Demo", "email": "office@example.com", "phone": "+16135550102", "role": "office", "password": "change-me-office" },
+    { "name": "Rep Demo", "email": "rep@example.com", "phone": "+16135550103", "role": "rep", "password": "change-me-rep" },
+    { "name": "Installer Demo", "email": "installer@example.com", "phone": "+16135550104", "role": "installer", "password": "change-me-installer" }
+  ],
+  "commission_rules": [
+    { "min_discount": 0.0, "max_discount": 10.0, "rate": 10.0 },
+    { "min_discount": 10.1, "max_discount": 20.0, "rate": 5.0 },
+    { "min_discount": 20.1, "max_discount": 100.0, "rate": 0.0 }
+  ],
+  "installer_rates": [
+    { "code": "standard_install", "label": "Standard Install", "rate": 1000, "unit": "ea" },
+    { "code": "walls_only", "label": "Walls Only", "rate": 400, "unit": "ea" },
+    { "code": "extra_work", "label": "Approved Extra Work (hourly)", "rate": 40, "unit": "hour" }
+  ],
+  "settings": {
+    "office_phone": "+1 613-555-0199",
+    "company_name": "Example Bath Co"
+  },
+  "demo_customers": [
+    { "name": "Pat Example", "email": "pat@example.com", "phone": "+16135550110", "address": "100 Example St, Ottawa, ON", "postal": "K1A 0A1" },
+    { "name": "Sam Sample", "email": "sam@example.com", "phone": "+16135550111", "address": "200 Sample Ave, Ottawa, ON", "postal": "K1B 0B2" }
+  ]
+}
