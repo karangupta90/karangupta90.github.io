@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Project — Five Star Bath Solutions of Ottawa</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .gate { max-width: 420px; margin: 3rem auto; text-align:center; }
+  .gate .card { text-align:left; }
+  .timeline { list-style:none; padding:0; margin:0; }
+  .timeline li { display:flex; gap:.6rem; padding:.35rem 0; align-items:flex-start; }
+  .timeline .dot { width:14px; height:14px; border-radius:50%; background:var(--line); margin-top:.3rem; flex:none; }
+  .timeline li.done .dot { background:var(--green); }
+  .timeline li.current .dot { background:var(--teal); box-shadow:0 0 0 4px #d9f0ea; }
+  .timeline li.done span, .timeline li.current span { font-weight:700; }
+  .doc-row { display:flex; justify-content:space-between; align-items:center; padding:.55rem 0; border-bottom:1px solid var(--line); }
+  .doc-row:last-child{border-bottom:none;}
+  .more-menu { position:relative; }
+  .more-panel {
+    display:none; position:absolute; right:0; top:110%; background:#fff; border:1px solid var(--line);
+    border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); min-width:220px; z-index:30; overflow:hidden;
+  }
+  .more-panel.open { display:block; }
+  .more-panel button { width:100%; text-align:left; border:none; border-radius:0; border-bottom:1px solid var(--line); background:#fff; }
+  .more-panel button:last-child { border-bottom:none; }
+  .home-tabbar { display:flex; gap:.4rem; }
+  #view-home .home-only { display:block; }
+  .section-view { display:none; }
+  .section-view.active { display:block; }
+  .payment-bar { height:14px; background:#e6eef0; border-radius:99px; overflow:hidden; margin:.4rem 0; }
+  .payment-bar div { height:100%; background:var(--teal); }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">PROTOTYPE — Customer Portal · mock data, no live systems connected</div>
+
+<!-- Magic link gate -->
+<div id="gate" class="container gate">
+  <h1 style="text-align:center;">Five Star Bath Solutions <span style="display:block;font-size:1rem;font-weight:400;">of Ottawa</span></h1>
+  <div class="card highlight">
+    <p>We texted and emailed you a secure link to your project page. This preview simulates opening that link.</p>
+    <button class="btn btn-primary btn-block" id="open-link">Open my project (simulate magic link)</button>
+    <hr class="rule">
+    <p class="small">Link expired or can't find it? <a href="#" id="request-new">Request a new link</a> — takes seconds, no password needed.</p>
+  </div>
+  <p class="small" style="text-align:center;">Prefer to talk to a person? Call us at <a href="tel:+16135551234">613-555-1234</a></p>
+</div>
+
+<!-- Portal app -->
+<div id="app" style="display:none;">
+  <header class="app-header">
+    <div class="brand">Five Star Bath Solutions<small>Your Project — Ottawa</small></div>
+    <div class="row" style="gap:.5rem; align-items:center;">
+      <a class="help-call" href="tel:+16135551234">📞 Call us</a>
+    </div>
+  </header>
+
+  <nav class="tabbar home-tabbar">
+    <button data-view="home" aria-selected="true">🏠 Home</button>
+    <div class="more-menu">
+      <button id="more-btn">More ▾</button>
+      <div class="more-panel" id="more-panel">
+        <button data-view="appointments">Appointments</button>
+        <button data-view="project">Project Details</button>
+        <button data-view="design">3D Design</button>
+        <button data-view="documents">Documents</button>
+        <button data-view="payments">Payments</button>
+        <button data-view="status">Project Status</button>
+        <button data-view="prep">Installation Prep</button>
+        <button data-view="service">Service &amp; Support</button>
+        <button data-view="messages">Messages</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- HOME / OVERVIEW — the primary landing view, everything else is one tap deeper -->
+    <section id="view-home" class="section-view active">
+      <h1 id="home-title"></h1>
+      <p class="small" id="home-address"></p>
+
+      <div class="card highlight">
+        <h3>What's happening with your project?</h3>
+        <p id="home-stage" class="pill pill-progress"></p>
+        <p id="home-next"></p>
+      </div>
+
+      <div class="card" id="home-action-card" style="display:none;">
+        <h3>Do you need to do anything?</h3>
+        <p id="home-action-text"></p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Next appointment</h3>
+          <p id="home-next-appt"></p>
+          <button class="btn" data-view="appointments">See all appointments</button>
+        </div>
+        <div class="card">
+          <h3>Installation</h3>
+          <p id="home-install"></p>
+          <button class="btn" data-view="status">See full status</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Your documents</h3>
+          <p class="small">Proposal, signed contract, and more — always available here.</p>
+          <button class="btn" data-view="documents">Open documents</button>
+        </div>
+        <div class="card">
+          <h3>Payments</h3>
+          <p id="home-balance"></p>
+          <button class="btn" data-view="payments">See payment details</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Need help?</h3>
+        <p>Your main contact: <b id="home-contact"></b></p>
+        <div class="row">
+          <a class="btn btn-primary" href="tel:+16135551234">📞 Call the office</a>
+          <button class="btn" data-view="service">Report a service issue</button>
+          <button class="btn" data-view="messages">Send a message</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPOINTMENTS -->
+    <section id="view-appointments" class="section-view">
+      <h2>Appointments</h2>
+      <div id="appt-cards" class="stack"></div>
+    </section>
+
+    <!-- PROJECT DETAILS -->
+    <section id="view-project" class="section-view">
+      <h2>Project Details</h2>
+      <div class="card">
+        <p><b>Project type:</b> <span id="scope-type"></span></p>
+        <p><b>Wall system:</b> <span id="scope-wall"></span></p>
+        <p><b>Base:</b> <span id="scope-base"></span></p>
+        <p><b>Door / glass:</b> <span id="scope-door"></span></p>
+        <p><b>Fixtures:</b> <span id="scope-fixtures"></span></p>
+        <p><b>Accessibility:</b> <span id="scope-access"></span></p>
+        <p class="small muted">This is a summary of your agreed scope. Your signed contract is the final word on scope — see Documents.</p>
+      </div>
+    </section>
+
+    <!-- DESIGN -->
+    <section id="view-design" class="section-view">
+      <h2>Your 3D Bathroom Design</h2>
+      <div class="card">
+        <div style="background:#eef2f4; border-radius:10px; height:220px; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); font-weight:700;">
+          [ 3D Design Preview — <span id="design-file"></span> ]
+        </div>
+        <p class="small" style="margin-top:.6rem;">Version <span id="design-version"></span> · Updated <span id="design-date"></span></p>
+        <p class="small" id="design-note"></p>
+        <button class="btn">⬇ Download design</button>
+        <p class="field-hint">This design is a visual representation to help you picture the finished space. Your signed contract controls the final agreed scope.</p>
+      </div>
+    </section>
+
+    <!-- DOCUMENTS -->
+    <section id="view-documents" class="section-view">
+      <h2>Documents</h2>
+      <div class="card" id="doc-list"></div>
+      <p class="small muted">These documents are saved here permanently — no expiring links. If anything looks wrong, call us.</p>
+    </section>
+
+    <!-- PAYMENTS -->
+    <section id="view-payments" class="section-view">
+      <h2>Payments</h2>
+      <div class="card">
+        <p><b>Contract amount:</b> $<span id="pay-contract"></span></p>
+        <p><b>Deposit paid:</b> $<span id="pay-deposit"></span></p>
+        <p><b>Total paid to date:</b> $<span id="pay-paid"></span></p>
+        <div class="payment-bar"><div id="pay-bar" style="width:0%"></div></div>
+        <p><b>Remaining balance:</b> $<span id="pay-balance"></span></p>
+        <p class="small" id="pay-due"></p>
+        <button class="btn btn-primary">View receipts</button>
+      </div>
+      <p class="small muted">We accept e-Transfer, cheque, and credit card. We will never ask you to pay through a link outside this page.</p>
+    </section>
+
+    <!-- STATUS -->
+    <section id="view-status" class="section-view">
+      <h2>Project Status</h2>
+      <div class="card">
+        <ul class="timeline" id="status-timeline"></ul>
+      </div>
+    </section>
+
+    <!-- PREP -->
+    <section id="view-prep" class="section-view">
+      <h2>Getting Ready for Installation</h2>
+      <div class="card stack">
+        <p>✔️ Clear a path to the bathroom and keep parking available for our crew.</p>
+        <p>✔️ Please arrange for pets to be in another room during the workday.</p>
+        <p>✔️ We may briefly shut off water — our crew will let you know.</p>
+        <p>✔️ Arrival window: <b>8:00 AM – 10:00 AM</b> · Typical duration: <b>1–3 days</b></p>
+        <p>✔️ Please have your remaining balance payment method ready — see Payments.</p>
+      </div>
+    </section>
+
+    <!-- SERVICE -->
+    <section id="view-service" class="section-view">
+      <h2>Service &amp; Support</h2>
+      <div class="banner">⚠ If you have an <b>active leak</b> or a <b>safety concern</b>, please call us right now at <a href="tel:+16135551234">613-555-1234</a> instead of submitting this form.</div>
+      <div class="card">
+        <form id="service-form">
+          <label for="sc-category">What's the issue? *</label>
+          <select id="sc-category" required>
+            <option value="">Select a category…</option>
+            <option>Active leak</option>
+            <option>Safety concern</option>
+            <option>Loose fixture</option>
+            <option>Door or glass issue</option>
+            <option>Caulking / sealant concern</option>
+            <option>Cosmetic concern</option>
+            <option>Something isn't working right</option>
+            <option>General question</option>
+          </select>
+          <label for="sc-desc">Tell us what's happening</label>
+          <textarea id="sc-desc" placeholder="No need to diagnose it — just describe what you're seeing."></textarea>
+          <label>Add a photo (optional)</label>
+          <div class="upload-box" style="border:2px dashed var(--line); border-radius:10px; padding:1rem; text-align:center; color:var(--ink-soft);">📷 Tap to add a photo</div>
+          <label for="sc-avail">When are you usually home?</label>
+          <input type="text" id="sc-avail" placeholder="e.g., weekday mornings">
+          <button class="btn btn-primary btn-block" type="submit" style="margin-top:1rem;">Submit request</button>
+        </form>
+        <div id="sc-confirm" style="display:none;" class="card highlight">
+          <h3>✓ Request received</h3>
+          <p>We'll be in touch shortly to confirm next steps. Reference: <b>SC-1050</b></p>
+        </div>
+      </div>
+      <h3>Your service history</h3>
+      <div id="service-history" class="card"></div>
+    </section>
+
+    <!-- MESSAGES -->
+    <section id="view-messages" class="section-view">
+      <h2>Messages</h2>
+      <div class="card">
+        <p class="small muted">Send us a note and our office will reply — usually the same business day.</p>
+        <label for="msg-text">Your message</label>
+        <textarea id="msg-text" placeholder="Type your question here…"></textarea>
+        <button class="btn btn-primary btn-block" id="send-msg">Send</button>
+        <p class="small" id="msg-sent" style="display:none; color:var(--green); font-weight:700;">✓ Sent — we'll reply soon.</p>
+      </div>
+    </section>
+
+  </div>
+  <p class="footer-note">Prototype build — Five Star Bath Solutions of Ottawa · FSBS Operations Project</p>
+</div>
+
+<script src="../assets/mock-data.js"></script>
+<script>
+(function(){
+  const P = window.FSBS_MOCK.project;
+
+  document.getElementById('open-link').addEventListener('click', () => {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    populate();
+  });
+  document.getElementById('request-new').addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('A new secure link has been sent to your phone and email.');
+  });
+
+  function switchView(name){
+    document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.tabbar > button[data-view]').forEach(b => b.setAttribute('aria-selected', b.dataset.view === name));
+    document.getElementById('more-panel').classList.remove('open');
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('[data-view]').forEach(el => {
+    el.addEventListener('click', () => switchView(el.dataset.view));
+  });
+  document.getElementById('more-btn').addEventListener('click', () => {
+    document.getElementById('more-panel').classList.toggle('open');
+  });
+
+  function populate(){
+    document.getElementById('home-title').textContent = 'Hi ' + P.customerName.split(' ')[0] + ', here\'s your project';
+    document.getElementById('home-address').textContent = P.address;
+    document.getElementById('home-stage').textContent = P.customerFacingStage;
+    document.getElementById('home-next').textContent = P.nextStep;
+    if (P.actionRequired) {
+      document.getElementById('home-action-card').style.display = 'block';
+      document.getElementById('home-action-text').textContent = 'Yes — please review the item below.';
+    }
+    const nextAppt = P.appointments.find(a => a.status !== 'Completed');
+    document.getElementById('home-next-appt').textContent = nextAppt ? (nextAppt.type + ' — ' + nextAppt.date + ' at ' + nextAppt.time) : 'No upcoming appointments right now.';
+    const install = P.appointments.find(a => a.type === 'Installation');
+    document.getElementById('home-install').innerHTML = install ? (install.date + ' <span class="pill ' + (install.status === 'Tentative' ? 'pill-tentative' : 'pill-confirmed') + '">' + install.status + '</span>') : 'Not yet scheduled.';
+    document.getElementById('home-balance').textContent = 'Balance due: $' + P.payments.balance.toLocaleString();
+    document.getElementById('home-contact').textContent = P.mainContact.name;
+
+    // Appointments
+    document.getElementById('appt-cards').innerHTML = P.appointments.map(a => `
+      <div class="card">
+        <div class="spread"><h3 style="margin:0;">${a.type}</h3><span class="pill ${a.status==='Tentative'?'pill-tentative':(a.status==='Completed'?'pill-done':'pill-confirmed')}">${a.status}</span></div>
+        <p>${a.date} · ${a.time}</p>
+      </div>`).join('');
+
+    // Project details
+    document.getElementById('scope-type').textContent = P.scope.projectType;
+    document.getElementById('scope-wall').textContent = P.scope.wallSystem;
+    document.getElementById('scope-base').textContent = P.scope.base;
+    document.getElementById('scope-door').textContent = P.scope.door;
+    document.getElementById('scope-fixtures').textContent = P.scope.fixtures;
+    document.getElementById('scope-access').textContent = P.scope.accessibility;
+
+    // Design
+    document.getElementById('design-file').textContent = P.design.fileLabel;
+    document.getElementById('design-version').textContent = P.design.version;
+    document.getElementById('design-date').textContent = P.design.date;
+    document.getElementById('design-note').textContent = P.design.note;
+
+    // Documents
+    document.getElementById('doc-list').innerHTML = P.documents.map(d => `
+      <div class="doc-row"><span>📄 ${d.name}<br><span class="small muted">Added ${d.date}</span></span><button class="btn">View</button></div>
+    `).join('');
+
+    // Payments
+    document.getElementById('pay-contract').textContent = P.payments.contractAmount.toLocaleString();
+    document.getElementById('pay-deposit').textContent = P.payments.deposit.toLocaleString();
+    document.getElementById('pay-paid').textContent = P.payments.paid.toLocaleString();
+    document.getElementById('pay-balance').textContent = P.payments.balance.toLocaleString();
+    document.getElementById('pay-due').textContent = P.payments.dueNote;
+    document.getElementById('pay-bar').style.width = Math.round((P.payments.paid / P.payments.contractAmount) * 100) + '%';
+
+    // Status timeline
+    document.getElementById('status-timeline').innerHTML = P.stages.map((s, i) => {
+      const cls = i < P.currentStageIndex ? 'done' : (i === P.currentStageIndex ? 'current' : '');
+      return `<li class="${cls}"><span class="dot"></span><span>${s}</span></li>`;
+    }).join('');
+
+    // Service history
+    const history = window.FSBS_MOCK.serviceCallsQueue.filter(s => s.customer === P.customerName);
+    document.getElementById('service-history').innerHTML = history.length
+      ? history.map(s => `<div class="list-row"><span>${s.category} <span class="small muted">(${s.opened})</span></span><span class="pill pill-progress">${s.stage}</span></div>`).join('')
+      : '<p class="small muted">No service requests on file.</p>';
+  }
+
+  document.getElementById('service-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.getElementById('service-form').style.display = 'none';
+    document.getElementById('sc-confirm').style.display = 'block';
+  });
+  document.getElementById('send-msg').addEventListener('click', () => {
+    document.getElementById('msg-sent').style.display = 'block';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dig *)",
+      "Bash(openssl s_client *)",
+      "Bash(openssl x509 *)",
+      "Bash(railway status)",
+      "Bash(railway whoami)"
+    ]
+  }
+}

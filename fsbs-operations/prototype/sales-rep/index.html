@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Appointments — Five Star Bath Solutions</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .appt-card .top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+  .appt-actions { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.75rem; }
+  .appt-actions .btn { flex:1 1 auto; }
+  .detail-block { display:none; }
+  .detail-block.open { display:block; }
+  .icon-row a.btn { text-decoration:none; }
+  .conditional { display:none; }
+  .conditional.show { display:block; }
+  .upload-box {
+    border: 2px dashed var(--line); border-radius: var(--radius);
+    padding: 1.25rem; text-align:center; color: var(--ink-soft);
+  }
+  .upload-box.done { border-color: var(--green); background:#f2faf4; color: var(--green); font-weight:700; }
+  .task-list .list-row { align-items: flex-start; }
+  .review-flag { background:#fdf0d8; border:1px solid #f0d9a8; border-radius:8px; padding:.6rem .8rem; margin-bottom:.75rem; font-size:.9rem; }
+</style>
+</head>
+<body>
+<div class="proto-banner">PROTOTYPE — Sales Representative mobile view · mock data, no live systems connected</div>
+<header class="app-header">
+  <div class="brand">Five Star Bath Solutions<small>Rep: Jordan M. · Ottawa Region</small></div>
+  <a class="help-call" href="tel:+16135551234">📞 Office</a>
+</header>
+
+<div class="container">
+
+  <div id="overdue-banner" class="banner" style="display:none;"></div>
+
+  <h1>My Appointments</h1>
+  <p class="small">Tap an appointment to see details. You must tap <b>Acknowledge</b> — just opening it doesn't count.</p>
+
+  <div id="appt-list" class="stack"></div>
+
+  <h2>My Tasks</h2>
+  <div id="task-list" class="card task-list"></div>
+
+  <p class="footer-note">Prototype build — Five Star Bath Solutions of Ottawa · FSBS Operations Project</p>
+</div>
+
+<template id="tpl-appt">
+  <div class="card appt-card">
+    <div class="top">
+      <div>
+        <h3 class="cust-name"></h3>
+        <p class="small when"></p>
+      </div>
+      <span class="pill status-pill"></span>
+    </div>
+    <p class="small addr"></p>
+    <div class="icon-row row">
+      <a class="btn directions-link" target="_blank" rel="noopener">🧭 Directions</a>
+      <a class="btn call-link">📞 Call customer</a>
+    </div>
+    <button class="btn btn-block toggle-detail" type="button">View details</button>
+    <div class="detail-block">
+      <hr class="rule">
+      <p><b>Project type:</b> <span class="project-type"></span></p>
+      <p><b>Lead notes:</b> <span class="lead-notes"></span></p>
+      <p class="small muted">Photos/supporting info: <span class="supporting-info"></span></p>
+
+      <div class="ack-section">
+        <h3>Acknowledge this appointment</h3>
+        <p class="small">Required by 11:00 PM the day it's assigned (or within 2 hours if assigned same evening).</p>
+        <div class="row ack-buttons">
+          <button class="btn btn-primary" data-ack="received">Received &amp; reviewed</button>
+          <button class="btn" data-ack="need-info">Need more info</button>
+          <button class="btn" data-ack="conflict">Scheduling conflict</button>
+          <button class="btn" data-ack="wrong-info">Info looks wrong</button>
+          <button class="btn" data-ack="unable">Unable to attend</button>
+        </div>
+        <p class="small ack-confirmed" style="display:none; color:var(--green); font-weight:700;"></p>
+      </div>
+
+      <div class="result-section" style="display:none;">
+        <hr class="rule">
+        <h3>Post-appointment result</h3>
+        <p class="small">Required by 9:00 PM the day of the appointment.</p>
+        <button class="btn btn-primary btn-block open-result">Complete post-appointment result</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Result form modal-ish panel (inline, simple) -->
+<div id="result-panel" class="container" style="display:none; position:fixed; inset:0; background:var(--bg); overflow:auto; z-index:50;">
+  <header class="app-header">
+    <div class="brand">Post-Appointment Result</div>
+    <button class="btn" id="close-result" style="background:transparent;border-color:#fff;color:#fff;">Close</button>
+  </header>
+  <div class="container">
+    <p class="review-flag" id="return-note" style="display:none;"></p>
+    <form id="result-form">
+      <label for="outcome">What was the outcome? *</label>
+      <select id="outcome" required>
+        <option value="">Select an outcome…</option>
+        <option value="sold">Sold</option>
+        <option value="pitch-miss">Pitch and miss</option>
+        <option value="standby">Standby / follow-up</option>
+        <option value="no-demo">No demo</option>
+        <option value="out-of-scope">Out of scope</option>
+        <option value="cancelled">Customer cancelled</option>
+        <option value="no-show">Customer no-show</option>
+        <option value="rescheduled">Rescheduled</option>
+        <option value="other">Other approved outcome</option>
+      </select>
+
+      <div class="conditional" data-for="sold,pitch-miss,standby,no-demo,out-of-scope">
+        <label>Was a proposal created? *</label>
+        <div class="choice-row">
+          <label><input type="radio" name="proposalCreated" value="yes"> Yes</label>
+          <label><input type="radio" name="proposalCreated" value="no"> No</label>
+        </div>
+        <label for="proposalAmount">Proposal amount ($)</label>
+        <input type="number" id="proposalAmount" min="0" step="1">
+        <div class="grid-2">
+          <div>
+            <label for="initialPrice">Initial price ($)</label>
+            <input type="number" id="initialPrice" min="0" step="1">
+          </div>
+          <div>
+            <label for="lowestPrice">Lowest price presented ($)</label>
+            <input type="number" id="lowestPrice" min="0" step="1">
+          </div>
+        </div>
+        <p class="field-hint" id="discount-calc">Discount will calculate automatically from the two prices above.</p>
+      </div>
+
+      <div class="conditional" data-for="sold">
+        <label>Contract signed? *</label>
+        <div class="choice-row">
+          <label><input type="radio" name="contractSigned" value="yes"> Yes</label>
+          <label><input type="radio" name="contractSigned" value="no"> No</label>
+        </div>
+        <label>Deposit collected? *</label>
+        <div class="choice-row">
+          <label><input type="radio" name="depositCollected" value="yes"> Yes</label>
+          <label><input type="radio" name="depositCollected" value="no"> No</label>
+        </div>
+        <label for="installTiming">Requested/tentative installation timing</label>
+        <input type="text" id="installTiming" placeholder="e.g., customer prefers late August">
+      </div>
+
+      <div class="conditional" data-for="standby">
+        <label for="followupDate">Follow-up date *</label>
+        <input type="date" id="followupDate">
+      </div>
+
+      <div class="conditional" data-for="cancelled,no-show,rescheduled,out-of-scope,other">
+        <label for="exceptionNote">Explanation (required for this outcome) *</label>
+        <textarea id="exceptionNote" placeholder="Brief explanation…"></textarea>
+      </div>
+
+      <hr class="rule">
+      <label>Primary objection (if any)</label>
+      <select id="objection">
+        <option value="">None / not applicable</option>
+        <option>Price</option>
+        <option>Timing</option>
+        <option>Needs to think it over</option>
+        <option>Spouse/decision-maker not present</option>
+        <option>Comparing other quotes</option>
+        <option>Financing concerns</option>
+      </select>
+
+      <hr class="rule">
+      <h3>Documentation</h3>
+      <label>Photos uploaded to CompanyCam? *</label>
+      <div class="choice-row">
+        <label><input type="radio" name="photosDone" value="yes" required> Yes</label>
+        <label><input type="radio" name="photosDone" value="no"> No</label>
+      </div>
+
+      <label>3D design</label>
+      <div class="upload-box" id="design-upload">
+        <p>📐 Tap to upload the 3D design file for this appointment (image, PDF, or design-tool link)</p>
+        <button class="btn" type="button" id="design-upload-btn">Choose file / paste link</button>
+      </div>
+      <p class="field-hint">Required for every completed appointment. Missing designs are flagged to management automatically.</p>
+
+      <label for="notes">Additional notes</label>
+      <textarea id="notes" placeholder="Anything management should know…"></textarea>
+
+      <label class="choice-row" style="display:inline-flex; margin-top:1rem;">
+        <input type="checkbox" id="mgmtHelp"> Flag for management assistance
+      </label>
+
+      <hr class="rule">
+      <div class="row">
+        <button type="button" class="btn btn-block" id="save-draft">Save draft</button>
+        <button type="submit" class="btn btn-primary btn-block">Submit result</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/mock-data.js"></script>
+<script>
+(function(){
+  const state = JSON.parse(JSON.stringify(window.FSBS_MOCK.appointments));
+  const listEl = document.getElementById('appt-list');
+  const tplAppt = document.getElementById('tpl-appt');
+  const overdueBanner = document.getElementById('overdue-banner');
+
+  function statusPillClass(appt){
+    if (appt.ackOverdue) return 'pill-overdue';
+    if (appt.ack) return 'pill-done';
+    return 'pill-progress';
+  }
+  function statusPillText(appt){
+    if (appt.ackOverdue) return 'Acknowledgement overdue';
+    if (appt.ack) return 'Acknowledged';
+    return 'Needs acknowledgement';
+  }
+
+  function render(){
+    listEl.innerHTML = '';
+    let anyOverdue = false;
+    state.forEach((appt, idx) => {
+      if (appt.ackOverdue || appt.resultOverdue) anyOverdue = true;
+      const node = tplAppt.content.cloneNode(true);
+      node.querySelector('.cust-name').textContent = appt.customer;
+      node.querySelector('.when').textContent = appt.date + ' at ' + appt.time;
+      node.querySelector('.addr').textContent = appt.address;
+      const pill = node.querySelector('.status-pill');
+      pill.textContent = statusPillText(appt);
+      pill.className = 'pill ' + statusPillClass(appt);
+      node.querySelector('.directions-link').href = 'https://maps.google.com/?q=' + encodeURIComponent(appt.address);
+      node.querySelector('.call-link').href = 'tel:' + appt.phone;
+      node.querySelector('.project-type').textContent = appt.projectType;
+      node.querySelector('.lead-notes').textContent = appt.leadNotes;
+      node.querySelector('.supporting-info').textContent = appt.supportingInfo;
+
+      const card = node.querySelector('.appt-card');
+      card.dataset.idx = idx;
+
+      const detail = node.querySelector('.detail-block');
+      node.querySelector('.toggle-detail').addEventListener('click', (e) => {
+        detail.classList.toggle('open');
+        e.target.textContent = detail.classList.contains('open') ? 'Hide details' : 'View details';
+      });
+
+      const ackSection = node.querySelector('.ack-section');
+      const ackConfirmed = node.querySelector('.ack-confirmed');
+      const resultSection = node.querySelector('.result-section');
+      if (appt.ack) {
+        ackSection.querySelector('.ack-buttons').style.display = 'none';
+        ackConfirmed.style.display = 'block';
+        ackConfirmed.textContent = '✓ Acknowledged: "' + appt.ackLabel + '"';
+        resultSection.style.display = 'block';
+      }
+      node.querySelectorAll('[data-ack]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          appt.ack = true;
+          appt.ackOverdue = false;
+          const labels = {received:'Received & reviewed','need-info':'Need more info',conflict:'Scheduling conflict','wrong-info':'Info looks wrong',unable:'Unable to attend'};
+          appt.ackLabel = labels[btn.dataset.ack];
+          render();
+        });
+      });
+
+      node.querySelector('.open-result').addEventListener('click', () => openResultPanel(idx));
+
+      listEl.appendChild(node);
+    });
+
+    if (anyOverdue) {
+      overdueBanner.style.display = 'block';
+      overdueBanner.innerHTML = '⚠ <b>You have overdue items.</b> Management has been notified. Please acknowledge or complete results as soon as possible.';
+    } else {
+      overdueBanner.style.display = 'none';
+    }
+
+    renderTasks();
+  }
+
+  function renderTasks(){
+    const taskList = document.getElementById('task-list');
+    const incomplete = [];
+    state.forEach(a => {
+      if (!a.ack) incomplete.push((a.ackOverdue ? '⚠ ' : '') + 'Acknowledge appointment — ' + a.customer);
+      if (a.ack && !a.resultSubmitted) incomplete.push((a.resultOverdue ? '⚠ ' : '') + 'Submit post-appointment result — ' + a.customer);
+    });
+    if (incomplete.length === 0) {
+      taskList.innerHTML = '<p class="small muted">No open tasks. Nice work.</p>';
+      return;
+    }
+    taskList.innerHTML = incomplete.map(t => '<div class="list-row"><span>' + t + '</span></div>').join('');
+  }
+
+  // --- Result panel ---
+  const panel = document.getElementById('result-panel');
+  const form = document.getElementById('result-form');
+  let currentIdx = null;
+
+  function openResultPanel(idx){
+    currentIdx = idx;
+    form.reset();
+    document.querySelectorAll('.conditional').forEach(c => c.classList.remove('show'));
+    document.getElementById('design-upload').classList.remove('done');
+    document.getElementById('design-upload').querySelector('p').textContent = '📐 Tap to upload the 3D design file for this appointment (image, PDF, or design-tool link)';
+    document.getElementById('return-note').style.display = 'none';
+    const appt = state[idx];
+    if (appt.returnedForCorrection) {
+      document.getElementById('return-note').style.display = 'block';
+      document.getElementById('return-note').textContent = '↩ Returned by management: ' + appt.returnedForCorrection;
+    }
+    panel.style.display = 'block';
+    window.scrollTo(0,0);
+  }
+  document.getElementById('close-result').addEventListener('click', () => panel.style.display = 'none');
+
+  document.getElementById('outcome').addEventListener('change', (e) => {
+    const val = e.target.value;
+    document.querySelectorAll('.conditional').forEach(c => {
+      const forVals = c.dataset.for.split(',');
+      c.classList.toggle('show', forVals.includes(val));
+    });
+  });
+
+  function recalcDiscount(){
+    const init = parseFloat(document.getElementById('initialPrice').value);
+    const low = parseFloat(document.getElementById('lowestPrice').value);
+    const hint = document.getElementById('discount-calc');
+    if (!isNaN(init) && !isNaN(low) && init > 0) {
+      const amt = init - low;
+      const pct = ((amt / init) * 100).toFixed(1);
+      hint.textContent = 'Discount: $' + amt.toFixed(0) + ' (' + pct + '%)';
+    } else {
+      hint.textContent = 'Discount will calculate automatically from the two prices above.';
+    }
+  }
+  document.getElementById('initialPrice').addEventListener('input', recalcDiscount);
+  document.getElementById('lowestPrice').addEventListener('input', recalcDiscount);
+
+  document.getElementById('design-upload-btn').addEventListener('click', () => {
+    const box = document.getElementById('design-upload');
+    box.classList.add('done');
+    box.querySelector('p').textContent = '✓ design-mockup-' + (currentIdx+1) + '.pdf uploaded';
+  });
+
+  document.getElementById('save-draft').addEventListener('click', () => {
+    alert('Draft saved. You can finish this later — it will still count as overdue until submitted.');
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const outcome = document.getElementById('outcome').value;
+    if (!outcome) { alert('Please select an outcome.'); return; }
+    const photosPicked = form.querySelector('input[name="photosDone"]:checked');
+    if (!photosPicked) { alert('Please confirm whether photos were uploaded.'); return; }
+    const needsException = ['cancelled','no-show','rescheduled','out-of-scope','other'].includes(outcome);
+    if (needsException && !document.getElementById('exceptionNote').value.trim()) {
+      alert('Please add a brief explanation for this outcome.'); return;
+    }
+    if (outcome === 'sold' && !document.getElementById('design-upload').classList.contains('done')) {
+      if (!confirm('No 3D design uploaded yet. This will be flagged to management as missing. Submit anyway?')) return;
+    }
+    state[currentIdx].resultSubmitted = true;
+    state[currentIdx].resultOverdue = false;
+    state[currentIdx].outcome = outcome;
+    panel.style.display = 'none';
+    render();
+    alert('Result submitted for ' + state[currentIdx].customer + '.');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

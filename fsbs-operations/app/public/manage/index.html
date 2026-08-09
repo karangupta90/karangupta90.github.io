@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Management — FSBS Operations</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛁</text></svg>">
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+  .container{max-width:1150px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+  @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  .kpi{text-align:center}.kpi .num{font-size:1.8rem;font-weight:800;color:var(--navy)}.kpi.alert .num{color:var(--red)}
+  .kpi .label{font-size:.8rem;color:var(--ink-soft)}
+  .tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin:1rem 0}
+  .tabs button{font-size:.85rem;padding:.4rem .8rem;min-height:auto}
+  .tabs button[aria-selected=true]{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .pane{display:none}.pane.active{display:block}
+  td .btn{min-height:auto;padding:.25rem .6rem;font-size:.8rem}
+  input.inline{min-height:auto;padding:.25rem .4rem;width:90px;display:inline-block}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">Five Star Bath Solutions<small id="who">Management</small></div>
+  <button class="btn" id="logout" style="background:transparent;border-color:#fff;color:#fff;">Sign out</button>
+</header>
+<div class="container">
+  <h1>Operating Picture</h1>
+  <div class="kpi-grid" id="kpis"></div>
+  <div class="tabs" id="tabs">
+    <button data-pane="overdue" aria-selected="true">Overdue</button>
+    <button data-pane="projects">Projects</button>
+    <button data-pane="service">Service calls</button>
+    <button data-pane="commissions">Commissions</button>
+    <button data-pane="revenue">Revenue</button>
+    <button data-pane="invoices">Installer invoices</button>
+    <button data-pane="comms">Messages &amp; outbox</button>
+    <button data-pane="failures">Failures &amp; AI</button>
+    <button data-pane="book">+ Book appointment</button>
+  </div>
+
+  <div id="pane-overdue" class="pane active"><div class="card"><h3>Overdue acknowledgements &amp; results</h3><div class="table-wrap"><table id="t-overdue"></table></div></div></div>
+
+  <div id="pane-projects" class="pane"><div id="projects"></div></div>
+
+  <div id="pane-service" class="pane"><div class="card"><div class="table-wrap"><table id="t-service"></table></div></div></div>
+
+  <div id="pane-commissions" class="pane">
+    <div class="card"><h3>Commission tiers (by discount)</h3><div class="table-wrap"><table id="t-rules"></table></div><p class="small muted">Editable by admin/manager via API (PUT /api/manage/commission-rules).</p></div>
+    <div class="card"><h3>Commissions</h3><div class="table-wrap"><table id="t-comm"></table></div></div>
+    <div class="card"><h3>By month</h3><div class="table-wrap"><table id="t-comm-month"></table></div></div>
+  </div>
+
+  <div id="pane-revenue" class="pane">
+    <div class="card"><h3>Job revenue (per install month)</h3><div class="table-wrap"><table id="t-rev-months"></table></div></div>
+    <div class="card"><h3>Jobs</h3><div class="table-wrap"><table id="t-rev-jobs"></table></div></div>
+  </div>
+
+  <div id="pane-invoices" class="pane"><div class="card"><div class="table-wrap"><table id="t-inv"></table></div></div></div>
+
+  <div id="pane-comms" class="pane">
+    <div class="card"><h3>Customer messages (portal)</h3><div id="msgs"></div></div>
+    <div class="card"><h3>Outbox (email/SMS queue → GoHighLevel when connected)</h3><div class="table-wrap"><table id="t-outbox"></table></div></div>
+  </div>
+
+  <div id="pane-failures" class="pane">
+    <div class="card danger"><h3>Integration failures</h3><div class="table-wrap"><table id="t-fail"></table></div></div>
+    <div class="card"><h3>AI draft approval queue</h3><div id="drafts"></div></div>
+  </div>
+
+  <div id="pane-book" class="pane">
+    <div class="card">
+      <h3>Book appointment (manual — office)</h3>
+      <form id="book">
+        <div class="grid-2">
+          <div><label>Customer</label><select id="b-cust"></select></div>
+          <div><label>Sales rep</label><select id="b-rep"></select></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Date &amp; time</label><input type="datetime-local" id="b-when" required></div>
+          <div><label>Project type</label><input type="text" id="b-type" placeholder="e.g., Tub-to-shower conversion"></div>
+        </div>
+        <label>Lead notes</label><textarea id="b-notes"></textarea>
+        <button class="btn btn-primary" style="margin-top:.75rem;">Book — customer gets confirmation, rep must acknowledge</button>
+        <p class="small" id="b-ok" style="color:var(--green);font-weight:700;"></p>
+      </form>
+      <hr class="rule">
+      <h3>New customer</h3>
+      <form id="newc">
+        <div class="grid-2">
+          <div><label>Name</label><input id="c-name" required></div>
+          <div><label>Email</label><input id="c-email" type="email"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Phone</label><input id="c-phone"></div>
+          <div><label>Address</label><input id="c-addr"></div>
+        </div>
+        <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="c-consent" checked> Marketing consent recorded (CASL)</label>
+        <button class="btn" style="margin-top:.5rem;">Add customer</button>
+      </form>
+      <hr class="rule">
+      <h3>Issue portal magic link</h3>
+      <div class="row"><select id="ml-cust" style="flex:1;"></select><button class="btn btn-primary" id="ml-go">Issue &amp; send link</button></div>
+      <p class="small" id="ml-out" style="word-break:break-all;"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = async (p, o={}) => { const r = await fetch(p, { headers:{'Content-Type':'application/json'}, ...o }); if (r.status===401) location.href='/'; return r; };
+const money = (n) => n==null?'—':'$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-selected', x===b));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  $('pane-'+b.dataset.pane).classList.add('active');
+}));
+$('logout').addEventListener('click', async () => { await api('/api/logout', {method:'POST'}); location.href='/'; });
+
+async function load(){
+  const me = await (await api('/api/me')).json(); $('who').textContent = me.name + ' · ' + me.role;
+  const K = await (await api('/api/manage/dashboard')).json();
+  const kpis = [
+    ['Ack overdue (T1/T2)', `${K.overdue_acks_t1}/${K.overdue_acks_t2}`, K.overdue_acks_t2>0],
+    ['Results overdue (T1/T2)', `${K.overdue_results_t1}/${K.overdue_results_t2}`, K.overdue_results_t2>0],
+    ['Missing 3D designs', K.missing_designs, K.missing_designs>0],
+    ['Handoffs incomplete', K.handoffs_incomplete, K.handoffs_incomplete>0],
+    ['Open service calls', K.open_service_calls, false],
+    ['Service calls 48h+', K.aging_service_48h, K.aging_service_48h>0],
+    ['Payments outstanding', money(K.payments_outstanding), false],
+    ['Commissions due', money(K.commissions_due), false],
+    ['Integration failures', K.integration_failures, K.integration_failures>0],
+    ['Outbox failed', K.outbox_failed, K.outbox_failed>0],
+    ['AI drafts pending', K.ai_drafts_pending, false],
+  ];
+  $('kpis').innerHTML = kpis.map(([l,v,a]) => `<div class="card kpi ${a?'alert':''}"><div class="num">${v}</div><div class="label">${l}</div></div>`).join('');
+
+  const over = await (await api('/api/manage/overdue')).json();
+  $('t-overdue').innerHTML = '<tr><th>Appt</th><th>Customer</th><th>Rep</th><th>When</th><th>Ack</th><th>Result</th></tr>' +
+    (over.map(o => `<tr><td>#${o.id}</td><td>${o.customer_name}</td><td>${o.rep_name||''}</td><td>${o.scheduled_at}</td>
+      <td>${o.ack_status==='pending' ? `<span class="pill pill-overdue">Tier ${o.ack_tier}</span>`:'✓'}</td>
+      <td>${['pending','draft'].includes(o.result_status) && o.result_tier>0 ? `<span class="pill pill-overdue">Tier ${o.result_tier}</span>`:o.result_status}</td></tr>`).join('') || '<tr><td colspan=6 class="muted">Nothing overdue 🎉</td></tr>');
+
+  const projects = await (await api('/api/manage/projects')).json();
+  $('projects').innerHTML = projects.map(p => `
+    <div class="card">
+      <div class="spread"><h3 style="margin:0;">${p.customer_name} — ${money(p.final_price)}</h3>
+        <span class="pill ${p.install.status==='Confirmed'?'pill-confirmed':'pill-tentative'}">${p.install.status}${p.install.date?' · '+p.install.date:''}</span></div>
+      <p class="small">Stage: <b>${p.stage}</b> · Measure: ${p.measure_status} · Collected ${money(p.financials.collected)} / A-R ${money(p.financials.ar)} · GP ${money(p.financials.gross_profit)} (${p.financials.gross_margin}%)</p>
+      <p class="small">Checklist: ${p.checklist.map(c => `${c.done?'✅':'⬜'} ${c.item}`).join(' · ')}</p>
+      <div class="row">
+        <select data-stage="${p.id}"><option value="">Set stage…</option>${['project_review','measurements','materials','install_scheduling','install_confirmed','install_in_progress','install_complete','follow_up','complete'].map(s=>`<option>${s}</option>`).join('')}</select>
+        <input class="inline" type="date" data-dt="${p.id}">
+        <select data-dk="${p.id}"><option value="tentative">tentative</option><option value="reserved">reserved</option><option value="confirmed">confirmed</option></select>
+        <button class="btn" data-setdate="${p.id}">Set date</button>
+        ${p.measure_status!=='completed' ? `<button class="btn" data-measure="${p.id}">Measure complete</button>` : ''}
+      </div>
+      <div class="row" style="margin-top:.4rem;">${(p.financials.costs||[]).map(c=>`<span class="pill">${c.category}: ${money(c.amt)}</span>`).join('')}
+        <input class="inline" placeholder="category" data-cc="${p.id}"><input class="inline" placeholder="amount" type="number" data-ca="${p.id}"><button class="btn" data-cost="${p.id}">+ cost</button></div>
+    </div>`).join('') || '<p class="muted">No projects yet.</p>';
+  document.querySelectorAll('[data-stage]').forEach(s => s.addEventListener('change', async () => { if (s.value) { await api(`/api/projects/${s.dataset.stage}/stage`, {method:'POST', body: JSON.stringify({stage:s.value})}); load(); }}));
+  document.querySelectorAll('[data-setdate]').forEach(b => b.addEventListener('click', async () => {
+    const id=b.dataset.setdate, date=document.querySelector(`[data-dt="${id}"]`).value, kind=document.querySelector(`[data-dk="${id}"]`).value;
+    if (date) { await api(`/api/projects/${id}/install-date`, {method:'POST', body: JSON.stringify({kind, date})}); load(); }
+  }));
+  document.querySelectorAll('[data-measure]').forEach(b => b.addEventListener('click', async () => {
+    const adj = prompt('Upsell(+)/missed(−) adjustment at measure, $ (blank = none):','');
+    await api(`/api/projects/${b.dataset.measure}/measure-complete`, {method:'POST', body: JSON.stringify(adj?{adjustment:Number(adj),adjustment_note:'entered at measure'}:{})}); load();
+  }));
+  document.querySelectorAll('[data-cost]').forEach(b => b.addEventListener('click', async () => {
+    const id=b.dataset.cost, cat=document.querySelector(`[data-cc="${id}"]`).value, amt=document.querySelector(`[data-ca="${id}"]`).value;
+    if (cat && amt) { await api(`/api/projects/${id}/costs`, {method:'POST', body: JSON.stringify({category:cat, amount:Number(amt)})}); load(); }
+  }));
+
+  const svc = await (await api('/api/manage/service-calls')).json();
+  $('t-service').innerHTML = '<tr><th>Ref</th><th>Customer</th><th>Category</th><th>Urgency</th><th>Stage</th><th>Opened</th><th></th></tr>' +
+    (svc.map(s => `<tr ${s.urgency==='emergency' && !['resolved','closed'].includes(s.stage) ? 'style="background:#fdf0ef"':''}>
+      <td>SC-${s.id}</td><td>${s.customer_name}<br><span class="small muted">${s.phone||''}</span></td><td>${s.category}</td><td>${s.urgency}</td>
+      <td><span class="pill ${['resolved','closed'].includes(s.stage)?'pill-done':'pill-progress'}">${s.stage}</span></td><td class="small">${s.opened_at}</td>
+      <td><select data-scs="${s.id}"><option value="">Set…</option>${['acknowledged','under_review','scheduled','visit_completed','resolved','closed','reopened'].map(x=>`<option>${x}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan=7 class="muted">None</td></tr>');
+  document.querySelectorAll('[data-scs]').forEach(s => s.addEventListener('change', async () => { if (s.value) { await api(`/api/service-calls/${s.dataset.scs}/stage`, {method:'POST', body: JSON.stringify({stage:s.value})}); load(); }}));
+
+  const rules = await (await api('/api/manage/commission-rules')).json();
+  $('t-rules').innerHTML = '<tr><th>Discount from</th><th>to</th><th>Commission rate</th></tr>' + rules.map(r => `<tr><td>${r.min_discount}%</td><td>${r.max_discount}%</td><td><b>${r.rate}%</b></td></tr>`).join('');
+  const comm = await (await api('/api/manage/commissions')).json();
+  $('t-comm').innerHTML = '<tr><th>Customer</th><th>Rep</th><th>Sale</th><th>Final $</th><th>Disc %</th><th>Rate</th><th>Commission</th><th>Status</th><th></th></tr>' +
+    (comm.rows.map(c => `<tr><td>${c.customer_name}</td><td>${c.rep_name||''}</td><td class="small">${c.sale_date||''}</td><td>${money(c.final_price)}</td><td>${c.discount_pct}%</td><td>${c.rate}%</td><td><b>${money(c.amount)}</b>${c.adjustment? ' <span class="small">(adj '+money(c.adjustment)+')</span>':''}</td>
+      <td><span class="pill ${c.status==='paid'?'pill-done':c.status==='due'?'pill-overdue':'pill-progress'}">${c.status}</span></td>
+      <td><select data-cst="${c.id}"><option value="">Set…</option>${['pending','due','approved','paid','held','reversed'].map(x=>`<option>${x}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan=9 class="muted">None yet</td></tr>');
+  document.querySelectorAll('[data-cst]').forEach(s => s.addEventListener('change', async () => { if (s.value) { await api(`/api/manage/commissions/${s.dataset.cst}/status`, {method:'POST', body: JSON.stringify({status:s.value})}); load(); }}));
+  $('t-comm-month').innerHTML = '<tr><th>Month</th><th># Sales</th><th>Total sales</th><th>Commissions</th></tr>' + (comm.byMonth.map(m => `<tr><td>${m.month}</td><td>${m.sales}</td><td>${money(m.total_sales)}</td><td>${money(m.commissions)}</td></tr>`).join('') || '');
+
+  const rev = await (await api('/api/manage/revenue')).json();
+  $('t-rev-months').innerHTML = '<tr><th>Month</th><th>Jobs</th><th>Revenue</th><th>Collected</th><th>A/R</th><th>Sentrel</th><th>Commissions</th><th>Finance fees</th><th>Gross profit</th></tr>' +
+    Object.entries(rev.months).map(([m,v]) => `<tr><td>${m}</td><td>${v.jobs}</td><td>${money(v.revenue)}</td><td>${money(v.collected)}</td><td>${money(v.ar)}</td><td>${money(v.sentrel)}</td><td>${money(v.commissions)}</td><td>${money(v.finance_fees)}</td><td>${money(v.gross_profit)}</td></tr>`).join('');
+  $('t-rev-jobs').innerHTML = '<tr><th>Customer</th><th>Install</th><th>Contracted</th><th>Collected</th><th>A/R</th><th>Commission</th><th>GP</th><th>GM%</th></tr>' +
+    rev.jobs.map(j => `<tr><td>${j.customer}</td><td class="small">${j.install_date||'—'}</td><td>${money(j.contracted_total)}</td><td>${money(j.collected)}</td><td>${money(j.ar)}</td><td>${money(j.commission)}</td><td>${money(j.gross_profit)}</td><td>${j.gross_margin}%</td></tr>`).join('');
+
+  const inv = await (await api('/api/manage/installer-invoices')).json();
+  $('t-inv').innerHTML = '<tr><th>#</th><th>Installer</th><th>Customer</th><th>Total</th><th>Bonus</th><th>Status</th><th></th></tr>' +
+    (inv.map(i => `<tr><td>${i.id}</td><td>${i.installer_name}</td><td>${i.customer_name}</td><td>${money(i.total)}</td><td>${money(i.bonus_amount)}</td>
+      <td><span class="pill ${i.status==='paid'?'pill-done':'pill-progress'}">${i.status}</span></td>
+      <td><select data-inv="${i.id}"><option value="">Set…</option>${['review','correction','approved','partial','rejected','scheduled','paid'].map(x=>`<option>${x}</option>`).join('')}</select></td></tr>`).join('') || '<tr><td colspan=7 class="muted">None</td></tr>');
+  document.querySelectorAll('[data-inv]').forEach(s => s.addEventListener('change', async () => {
+    if (!s.value) return;
+    const body = { status: s.value };
+    if (s.value==='partial') body.approved_total = Number(prompt('Approved amount $:', '0'));
+    await api(`/api/manage/installer-invoices/${s.dataset.inv}/decide`, {method:'POST', body: JSON.stringify(body)}); load();
+  }));
+
+  const msgs = await (await api('/api/manage/messages')).json();
+  $('msgs').innerHTML = msgs.map(m => `<p class="small"><b>${m.customer_name}</b> (${m.direction}): ${m.body} <button class="btn" data-reply="${m.customer_id}">Reply</button></p>`).join('') || '<p class="muted small">No messages.</p>';
+  document.querySelectorAll('[data-reply]').forEach(b => b.addEventListener('click', async () => {
+    const t = prompt('Reply:'); if (t) { await api(`/api/manage/messages/${b.dataset.reply}/reply`, {method:'POST', body: JSON.stringify({body:t})}); load(); }
+  }));
+  const outbox = await (await api('/api/manage/outbox')).json();
+  $('t-outbox').innerHTML = '<tr><th>#</th><th>To</th><th>Ch</th><th>Template</th><th>Status</th><th>Scheduled</th><th></th></tr>' +
+    outbox.slice(0,30).map(o => `<tr><td>${o.id}</td><td>${o.to_kind}#${o.to_id}</td><td>${o.channel}</td><td class="small">${o.template}</td>
+      <td><span class="pill ${o.status==='sent'?'pill-done':o.status==='failed'?'pill-overdue':'pill-progress'}">${o.status}</span></td><td class="small">${o.scheduled_for}</td>
+      <td>${o.status==='failed'?`<button class="btn" data-rs="${o.id}">Resend</button>`:''}</td></tr>`).join('');
+  document.querySelectorAll('[data-rs]').forEach(b => b.addEventListener('click', async () => { await api(`/api/manage/outbox/${b.dataset.rs}/resend`, {method:'POST'}); load(); }));
+
+  const fails = await (await api('/api/manage/integration-failures')).json();
+  $('t-fail').innerHTML = '<tr><th>#</th><th>Source</th><th>Error</th><th>At</th><th></th></tr>' +
+    (fails.map(f => `<tr><td>${f.id}</td><td>${f.source}</td><td class="small">${f.error}</td><td class="small">${f.at}</td><td><button class="btn" data-fix="${f.id}">Resolve</button></td></tr>`).join('') || '<tr><td colspan=5 class="muted">None open 🎉</td></tr>');
+  document.querySelectorAll('[data-fix]').forEach(b => b.addEventListener('click', async () => {
+    const note = prompt('Resolution note:'); await api(`/api/manage/integration-failures/${b.dataset.fix}/resolve`, {method:'POST', body: JSON.stringify({note})}); load();
+  }));
+  const drafts = await (await api('/api/manage/ai-drafts')).json();
+  $('drafts').innerHTML = drafts.map(d => `<div class="card" style="border-left:4px solid var(--teal);"><p class="small"><b>${d.kind}</b> — ${d.context||''}</p><p>${d.draft}</p>
+    <div class="row"><button class="btn btn-primary" data-dd="${d.id}" data-v="approved">Approve</button><button class="btn" data-dd="${d.id}" data-v="rejected">Reject</button></div></div>`).join('') || '<p class="muted small">Queue empty — nothing waiting for approval.</p>';
+  document.querySelectorAll('[data-dd]').forEach(b => b.addEventListener('click', async () => { await api(`/api/manage/ai-drafts/${b.dataset.dd}/decide`, {method:'POST', body: JSON.stringify({status:b.dataset.v})}); load(); }));
+
+  const custs = await (await api('/api/customers')).json();
+  const copts = custs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  $('b-cust').innerHTML = copts; $('ml-cust').innerHTML = copts;
+  // reps for booking
+  $('b-rep').innerHTML = '';
+  // lightweight: reuse /api/customers pattern — reps come from a tiny endpoint? Use commissions rows fallback; simplest: ask server via /api/manage/reps
+  const reps = await (await api('/api/manage/reps')).json();
+  $('b-rep').innerHTML = reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+}
+$('book').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = await api('/api/appointments', { method:'POST', body: JSON.stringify({ customer_id: Number($('b-cust').value), rep_id: Number($('b-rep').value), scheduled_at: $('b-when').value, project_type: $('b-type').value, lead_notes: $('b-notes').value }) });
+  const d = await r.json();
+  $('b-ok').textContent = r.ok ? `✓ Booked #${d.id}. Ack deadline: ${d.ack_deadline}` : (d.error || 'Failed');
+  load();
+});
+$('newc').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await api('/api/customers', { method:'POST', body: JSON.stringify({ name: $('c-name').value, email: $('c-email').value, phone: $('c-phone').value, address: $('c-addr').value, consent_marketing: $('c-consent').checked }) });
+  e.target.reset(); load();
+});
+$('ml-go').addEventListener('click', async () => {
+  const r = await api(`/api/customers/${$('ml-cust').value}/magic-link`, { method:'POST', body: JSON.stringify({}) });
+  const d = await r.json();
+  $('ml-out').textContent = r.ok ? 'Link (also queued to customer): ' + d.url : d.error;
+});
+load();
+</script>
+</body>
+</html>

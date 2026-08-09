@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Project — Five Star Bath Solutions of Ottawa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛁</text></svg>">
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+  .section-view{display:none}.section-view.active{display:block}
+  .more-panel{display:none;position:absolute;right:0;top:110%;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:220px;z-index:30;overflow:hidden}
+  .more-panel.open{display:block}
+  .more-panel button{width:100%;text-align:left;border:none;border-radius:0;border-bottom:1px solid var(--line);background:#fff}
+  .more-menu{position:relative}
+  .doc-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid var(--line)}
+  .doc-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div id="gate" class="container" style="max-width:420px;margin:3rem auto;">
+  <h1 style="text-align:center;">Five Star Bath Solutions<span style="display:block;font-size:1rem;font-weight:400;">of Ottawa — Your Project</span></h1>
+  <div class="card highlight" id="gate-msg">
+    <p>Open this page using the secure link we sent to your phone or email.</p>
+    <p class="small">Link expired or lost? Enter your email and we'll send a fresh one — no password needed.</p>
+    <label for="renew-email">Your email</label>
+    <input type="email" id="renew-email">
+    <button class="btn btn-primary btn-block" id="renew" style="margin-top:.75rem;">Send me a new link</button>
+    <p class="small" id="renew-ok" style="display:none;color:var(--green);font-weight:700;"></p>
+  </div>
+  <p class="small" style="text-align:center;">Prefer to talk to a person? Call us at <a id="gate-phone" href="tel:+13438432719">343-843-2719</a></p>
+</div>
+
+<div id="app" style="display:none;">
+  <header class="app-header">
+    <div class="brand" id="hdr">Five Star Bath Solutions<small>Your Project</small></div>
+    <a class="help-call" id="callus" href="tel:+13438432719">📞 Call us</a>
+  </header>
+  <nav class="tabbar">
+    <button data-view="home" aria-selected="true">🏠 Home</button>
+    <div class="more-menu">
+      <button id="more-btn">More ▾</button>
+      <div class="more-panel" id="more-panel">
+        <button data-view="appointments">Appointments</button>
+        <button data-view="documents">Documents</button>
+        <button data-view="payments">Payments</button>
+        <button data-view="service">Service &amp; Support</button>
+        <button data-view="messages">Messages</button>
+      </div>
+    </div>
+  </nav>
+  <div class="container">
+    <section id="view-home" class="section-view active">
+      <h1 id="hi"></h1><p class="small" id="addr"></p>
+      <div class="card highlight"><h3>What's happening with your project?</h3><p id="stage" class="pill pill-progress"></p><p id="install-line"></p></div>
+      <div class="grid-2">
+        <div class="card"><h3>Next appointment</h3><p id="next-appt"></p><button class="btn" data-view="appointments">All appointments</button></div>
+        <div class="card"><h3>Payments</h3><p id="balance"></p><button class="btn" data-view="payments">Details</button></div>
+      </div>
+      <div class="card"><h3>Need help?</h3>
+        <div class="row"><a class="btn btn-primary" id="callus2" href="tel:+13438432719">📞 Call the office</a>
+        <button class="btn" data-view="service">Report an issue</button>
+        <button class="btn" data-view="messages">Send a message</button></div>
+      </div>
+    </section>
+
+    <section id="view-appointments" class="section-view"><h2>Appointments</h2><div id="appts" class="stack"></div></section>
+
+    <section id="view-documents" class="section-view">
+      <h2>Documents</h2><div class="card" id="docs"></div>
+      <p class="small muted">Saved here permanently — no expiring links.</p>
+    </section>
+
+    <section id="view-payments" class="section-view">
+      <h2>Payments</h2>
+      <div class="card" id="pay-card"></div>
+      <p class="small muted">We accept e-Transfer, cheque, and credit card. We will never ask you to pay through a link outside this page.</p>
+    </section>
+
+    <section id="view-service" class="section-view">
+      <h2>Service &amp; Support</h2>
+      <div class="banner">⚠ Active leak or safety concern? Please <b>call us right now</b> at <a href="tel:+13438432719">343-843-2719</a>.</div>
+      <div class="card">
+        <form id="svc">
+          <label>What's the issue? *</label>
+          <select id="svc-cat" required>
+            <option value="">Select…</option><option>Loose fixture</option><option>Door or glass issue</option>
+            <option>Caulking / sealant concern</option><option>Cosmetic concern</option><option>Not draining properly</option>
+            <option>Something wasn't finished</option><option>General question</option>
+          </select>
+          <label>Tell us what's happening</label><textarea id="svc-desc" placeholder="Plain description is perfect."></textarea>
+          <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="svc-leak"> Water is leaking</label>
+          <label class="choice-row" style="display:inline-flex;"><input type="checkbox" id="svc-safety"> I feel it's a safety concern</label>
+          <button class="btn btn-primary btn-block" style="margin-top:.75rem;">Submit request</button>
+        </form>
+        <p id="svc-ok" style="display:none;color:var(--green);font-weight:700;"></p>
+      </div>
+      <h3>Your service requests</h3><div class="card" id="svc-history"></div>
+    </section>
+
+    <section id="view-messages" class="section-view">
+      <h2>Messages</h2>
+      <div class="card">
+        <div id="msg-history" class="stack" style="margin-bottom:.75rem;"></div>
+        <label>Your message</label><textarea id="msg-body"></textarea>
+        <button class="btn btn-primary btn-block" id="msg-send" style="margin-top:.5rem;">Send</button>
+        <p class="small" id="msg-ok" style="display:none;color:var(--green);font-weight:700;">✓ Sent — we'll reply soon.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const TOKEN = new URLSearchParams(location.search).get('t');
+const api = (p, o={}) => fetch(p + (p.includes('?') ? '&' : '?') + 't=' + encodeURIComponent(TOKEN || ''), { headers:{'Content-Type':'application/json'}, ...o });
+
+function show(name){
+  document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+  $('view-'+name).classList.add('active');
+  $('more-panel').classList.remove('open'); scrollTo(0,0);
+}
+document.addEventListener('click', (e) => { const v = e.target.closest('[data-view]'); if (v) show(v.dataset.view); });
+$('more-btn').addEventListener('click', () => $('more-panel').classList.toggle('open'));
+
+$('renew').addEventListener('click', async () => {
+  const r = await fetch('/api/portal/renew-link', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: $('renew-email').value }) });
+  const d = await r.json(); $('renew-ok').textContent = d.message; $('renew-ok').style.display = 'block';
+});
+
+async function load(){
+  if (!TOKEN) return;
+  const r = await api('/api/portal/bundle');
+  if (!r.ok) { $('gate-msg').insertAdjacentHTML('afterbegin', '<p style="color:var(--red);font-weight:700;">That link has expired or is no longer valid — request a new one below.</p>'); return; }
+  const B = await r.json();
+  $('gate').style.display = 'none'; $('app').style.display = 'block';
+  $('hi').textContent = `Hi ${B.customer.name.split(' ')[0]}, here's your project`;
+  $('addr').textContent = B.customer.address || '';
+  $('stage').textContent = B.project ? B.project.stage : 'Consultation phase';
+  const inst = B.project?.install;
+  $('install-line').innerHTML = inst && inst.date
+    ? `Installation: <b>${inst.date}</b> <span class="pill ${inst.status==='Confirmed'?'pill-confirmed':'pill-tentative'}">${inst.status}</span>`
+    : 'Installation: not yet scheduled — we\'ll let you know as soon as timing firms up.';
+  const up = B.appointments.find(a => a.status === 'booked');
+  $('next-appt').textContent = up ? `${up.project_type || 'Appointment'} — ${up.scheduled_at}` : 'No upcoming appointments.';
+  $('balance').textContent = B.balance != null ? `Balance remaining: $${B.balance.toLocaleString()}` : 'No payments due.';
+  $('appts').innerHTML = B.appointments.map(a => `<div class="card"><div class="spread"><b>${a.project_type || 'Appointment'}</b><span class="pill ${a.status==='completed'?'pill-done':'pill-confirmed'}">${a.status}</span></div><p class="small">${a.scheduled_at}</p></div>`).join('') || '<p class="small muted">None yet.</p>';
+  $('docs').innerHTML = B.documents.map(d => `<div class="doc-row"><span>📄 ${d.title}<br><span class="small muted">Added ${d.created_at}</span></span><a class="btn" href="/api/portal/document/${d.id}?t=${encodeURIComponent(TOKEN)}">View</a></div>`).join('') || '<p class="small muted">No documents yet.</p>';
+  const paid = B.payments.filter(p => p.status==='received').reduce((s,p)=>s+p.amount,0);
+  $('pay-card').innerHTML = B.contract_total != null ? `
+    <p><b>Contract amount:</b> $${B.contract_total.toLocaleString()}</p>
+    <p><b>Paid to date:</b> $${paid.toLocaleString()}</p>
+    <p><b>Remaining balance:</b> $${(B.balance||0).toLocaleString()}</p>
+    ${B.payments.map(p => `<p class="small">${p.kind}: $${p.amount.toLocaleString()} — ${p.status}${p.received_at ? ' on ' + p.received_at : ''}</p>`).join('')}`
+    : '<p class="small muted">No contract on file yet.</p>';
+  $('svc-history').innerHTML = B.service_calls.map(s => `<div class="list-row"><span>SC-${s.id} · ${s.category}</span><span class="pill ${['resolved','closed'].includes(s.stage)?'pill-done':'pill-progress'}">${s.stage}</span></div>`).join('') || '<p class="small muted">No service requests.</p>';
+  $('msg-history').innerHTML = B.messages.slice().reverse().map(m => `<p class="small"><b>${m.direction==='in'?'You':'Five Star Bath'}:</b> ${m.body}</p>`).join('');
+}
+$('svc').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = await api('/api/portal/service', { method:'POST', body: JSON.stringify({ category: $('svc-cat').value, description: $('svc-desc').value, leak: $('svc-leak').checked, safety: $('svc-safety').checked }) });
+  const d = await r.json();
+  $('svc').style.display = 'none';
+  $('svc-ok').style.display = 'block';
+  $('svc-ok').textContent = `✓ Received — reference ${d.ref}. ${d.urgency === 'emergency' ? 'This looks urgent: please also call us now at 343-843-2719.' : "We'll be in touch shortly."}`;
+  load();
+});
+$('msg-send').addEventListener('click', async () => {
+  if (!$('msg-body').value.trim()) return;
+  await api('/api/portal/message', { method:'POST', body: JSON.stringify({ body: $('msg-body').value }) });
+  $('msg-body').value = ''; $('msg-ok').style.display = 'block'; load();
+});
+load();
+</script>
+</body>
+</html>

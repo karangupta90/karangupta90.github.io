@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report a Service Issue — Five Star Bath Solutions of Ottawa</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .step { display:none; }
+  .step.active { display:block; }
+  .safety-card { border:2px solid var(--red); background:#fdf0ef; }
+  .cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+  @media (max-width:420px){ .cat-grid{ grid-template-columns:1fr; } }
+  .cat-btn { text-align:left; padding:.9rem; border-radius:10px; border:2px solid var(--line); background:#fff; font-weight:700; min-height:var(--tap); }
+  .cat-btn[data-urgent="true"] { border-color:var(--red); color:var(--red); }
+  .cat-btn.selected { border-color:var(--teal); background:#eef8f6; }
+  .status-line { display:flex; gap:.5rem; align-items:center; margin:.4rem 0; }
+</style>
+</head>
+<body>
+<div class="proto-banner">PROTOTYPE — Standalone Service-Call Intake · mock data, no live systems connected</div>
+<header class="app-header">
+  <div class="brand">Five Star Bath Solutions<small>Report a Service Issue</small></div>
+  <a class="help-call" href="tel:+16135551234">📞 Call now</a>
+</header>
+
+<div class="container">
+
+  <!-- Step 1: safety gate -->
+  <div id="step-1" class="step active">
+    <h1>Let's get this fixed</h1>
+    <p>First, is this urgent?</p>
+    <div class="card safety-card">
+      <h3>⚠ Active leak or safety concern?</h3>
+      <p>If water is actively leaking, or you feel unsafe using your bathroom, please <b>call us right now</b> instead of filling out this form — we'll get to you faster by phone.</p>
+      <a class="btn btn-primary btn-block" href="tel:+16135551234">📞 Call 613-555-1234 now</a>
+    </div>
+    <button class="btn btn-block" id="not-urgent">No — this isn't urgent, continue with the form</button>
+  </div>
+
+  <!-- Step 2: category -->
+  <div id="step-2" class="step">
+    <h2>What's going on?</h2>
+    <p class="small">Pick the option closest to what you're seeing. You don't need to diagnose the cause.</p>
+    <div class="cat-grid" id="cat-grid">
+      <button class="cat-btn" data-cat="Cosmetic concern">Cosmetic concern<br><span class="small muted">e.g., caulking, small marks</span></button>
+      <button class="cat-btn" data-cat="Loose fixture">Loose or wobbly fixture</button>
+      <button class="cat-btn" data-cat="Door or glass issue">Door or glass issue</button>
+      <button class="cat-btn" data-cat="Not draining properly">Not draining properly</button>
+      <button class="cat-btn" data-cat="Incomplete work">Something wasn't finished</button>
+      <button class="cat-btn" data-cat="General question">General question</button>
+    </div>
+    <button class="btn btn-block" id="to-step3" disabled style="margin-top:1rem;">Continue</button>
+  </div>
+
+  <!-- Step 3: details -->
+  <div id="step-3" class="step">
+    <h2>A few details</h2>
+    <form id="detail-form">
+      <label for="desc">Describe what you're seeing</label>
+      <textarea id="desc" placeholder="Plain description is perfect — no need for technical terms."></textarea>
+      <label>Add a photo (optional, helps us prepare)</label>
+      <div class="upload-box" style="border:2px dashed var(--line); border-radius:10px; padding:1rem; text-align:center; color:var(--ink-soft);">📷 Tap to add a photo</div>
+      <label for="avail">When are you usually available?</label>
+      <input type="text" id="avail" placeholder="e.g., weekday afternoons">
+      <label for="phone">Best phone number to reach you</label>
+      <input type="tel" id="phone" placeholder="(613) 555-0100">
+      <button class="btn btn-primary btn-block" type="submit" style="margin-top:1rem;">Submit request</button>
+    </form>
+  </div>
+
+  <!-- Step 4: confirmation -->
+  <div id="step-4" class="step">
+    <div class="card highlight">
+      <h2>✓ We've got it</h2>
+      <p>Your reference number is <b>SC-1050</b>.</p>
+      <div class="status-line"><span class="pill pill-done">Received</span></div>
+      <p><b>What happens next:</b> our team reviews every request and will contact you, usually within one business day, to confirm next steps. You'll get a text and email update at each stage.</p>
+      <a class="btn btn-primary btn-block" href="../portal/index.html">View this in your project page</a>
+    </div>
+    <p class="small" style="text-align:center;">Something urgent come up instead? Call us anytime at <a href="tel:+16135551234">613-555-1234</a></p>
+  </div>
+
+  <p class="footer-note">Prototype build — Five Star Bath Solutions of Ottawa · FSBS Operations Project</p>
+</div>
+
+<script>
+(function(){
+  function show(id){
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+  document.getElementById('not-urgent').addEventListener('click', () => show('step-2'));
+
+  let selected = null;
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selected = btn.dataset.cat;
+      document.getElementById('to-step3').disabled = false;
+    });
+  });
+  document.getElementById('to-step3').addEventListener('click', () => show('step-3'));
+
+  document.getElementById('detail-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    show('step-4');
+  });
+})();
+</script>
+</body>
+</html>
