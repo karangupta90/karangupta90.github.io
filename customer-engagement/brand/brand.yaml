@@ -1,0 +1,44 @@
+# Brand kit - the single source of truth for how every message sounds and looks.
+# Every generated or hand-written message is checked against this file before sending.
+# Replace the placeholder values with your business's details.
+
+business_name: "Your Company"          # used in sign-offs and the SMS opt-out footer
+sender_name: "Karan"                    # a real person's name - leads reply to people, not brands
+sender_title: "Customer Success"        # appears in the email signature
+
+voice:
+  # Short adjectives the copywriter must embody.
+  personality: [warm, direct, helpful, confident, never pushy]
+  # Reading level target - old leads skim; plain language wins.
+  reading_level: "grade 6-8"
+  # Rules the copywriter must follow.
+  do:
+    - "Write like a real person texting a customer they remember"
+    - "Reference what the lead originally asked about"
+    - "Ask one simple question per message"
+    - "Keep SMS under 320 characters"
+  dont:
+    - "Use ALL CAPS, excessive exclamation marks or emojis"
+    - "Invent discounts, deadlines or claims that are not in the concept"
+    - "Pretend to be anyone other than the sender"
+
+# Phrases that must never appear (spam triggers / off-brand). Case-insensitive.
+banned_phrases:
+  - "act now"
+  - "100% free"
+  - "guaranteed"
+  - "limited time only"
+  - "click here"
+  - "dear customer"
+
+sms:
+  max_chars: 320                              # two SMS segments; longer messages cost more and look spammy
+  opt_out_footer: "Reply STOP to opt out."    # appended to the first SMS a lead receives (carrier + TCPA requirement)
+
+email:
+  signature_html: |
+    <p style="margin:24px 0 0">{sender_name}<br>{sender_title}, {business_name}</p>
+  # Visual identity for the HTML email wrapper.
+  primary_color: "#1F4E79"
+  font_family: "Arial, Helvetica, sans-serif"
+  unsubscribe_text: "Don't want these emails? Just reply 'unsubscribe'."

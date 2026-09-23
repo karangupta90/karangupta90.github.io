@@ -1,0 +1,16 @@
+# CONCEPT FILE - this is the only thing you write. The system builds the rest.
+name: Old Lead Reactivation
+objective: Book a free 15-minute consultation call
+audience_tag: lead-cold              # GHL tag on the contacts to target (e.g. no activity 60+ days)
+angle: >
+  We're reaching back out to people who asked about our services earlier this year.
+  Things may have changed for them - we want to check in, help, and make it easy to restart.
+offer: Priority scheduling this month and a free project assessment
+booking_link: https://example.com/book   # your GHL calendar link
+conversion_event: appointment_booked
+channels: [sms, email, phone]
+variants_per_step: 3                 # copy variants the bandit tests per step
+holdout_pct: 0.10                    # 10% control group proves real lift
+notes: >
+  Leads originally enquired via website form or Facebook ads. Common objections:
+  price, timing, "went with someone else". Be human and brief.

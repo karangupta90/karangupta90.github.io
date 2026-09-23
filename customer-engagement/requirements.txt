@@ -1,0 +1,9 @@
+anthropic>=1.8      # Claude API SDK (AI copywriter)
+pydantic>=2.7       # structured-output schemas
+pyyaml>=6.0         # brand kit, concepts and plans
+requests>=2.31      # GoHighLevel API client
+fastapi>=0.110      # webhook server
+uvicorn>=0.29       # runs the webhook server
+cryptography>=42    # verifies GoHighLevel Ed25519 webhook signatures
+pytest>=8           # tests
+httpx>=0.27         # used by FastAPI's TestClient in tests
